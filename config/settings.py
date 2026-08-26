@@ -38,10 +38,18 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     # Third-party apps
     "rest_framework",
+    "rest_framework.authtoken",
     "corsheaders",
-    # Local apps will be added here as features are designed
+    "drf_spectacular",
+    "django_filters",
+    # Local domain apps
+    "apps.core",
+    "apps.users",
+    "apps.teams",
+    "apps.notes",
 ]
 
 MIDDLEWARE = [
@@ -119,14 +127,73 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Django REST Framework Settings
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
     ],
+    "DEFAULT_PAGINATION_CLASS": "apps.core.pagination.StandardResultsSetPagination",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "EXCEPTION_HANDLER": "apps.core.exception_handler.custom_exception_handler",
     "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%SZ",
+}
+
+# OpenAPI documentation settings via drf-spectacular
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Blue Notes API",
+    "DESCRIPTION": (
+        "REST API for multi-tenant team note-taking service. "
+        "Supports user auth, team workspaces, personal & team notes, "
+        "Optimistic Concurrency Control (OCC), revision history, soft-delete, "
+        "and PostgreSQL full-text search."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": False,
+        "defaultModelsExpandDepth": 2,
+        "defaultModelExpandDepth": 2,
+        "filter": True,
+        "docExpansion": "list",
+        "showExtensions": True,
+        "showCommonExtensions": True,
+    },
+    "TAGS": [
+        {
+            "name": "Authentication",
+            "description": "User registration, authentication token acquisition, and profile management.",
+        },
+        {
+            "name": "Teams",
+            "description": "Workspace multi-tenancy, member rosters, and RBAC role assignments.",
+        },
+        {
+            "name": "Notes",
+            "description": "Personal and team note capture, OCC edits, revisions, soft-delete, and search.",
+        },
+        {
+            "name": "Tags",
+            "description": "Categorical tags for organizing and filtering notes.",
+        },
+        {
+            "name": "Health",
+            "description": "System liveness and health status checks.",
+        },
+    ],
 }
 
 # CORS configuration (permissive for local dev)
