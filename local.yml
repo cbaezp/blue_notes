@@ -1,0 +1,39 @@
+services:
+  django:
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    image: blue_notes_local_django
+    container_name: blue_notes_local_django
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app:z
+    env_file:
+      - .env.local
+    ports:
+      - "8000:8000"
+    command: /start
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: blue_notes_local_postgres
+    volumes:
+      - blue_notes_local_postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env.local
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-blue_notes_db}
+      POSTGRES_USER: ${POSTGRES_USER:-blue_notes_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-blue_notes_password}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blue_notes_user} -d ${POSTGRES_DB:-blue_notes_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  blue_notes_local_postgres_data: {}

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# Keep environment in sync with pyproject.toml
+uv sync --all-groups --no-install-project
+
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8000

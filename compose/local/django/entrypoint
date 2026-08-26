@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+postgres_ready() {
+python << END
+import sys
+import environ
+import psycopg
+
+env = environ.Env()
+db_url = env.str('DATABASE_URL', '')
+
+if not db_url:
+    sys.exit(0)
+
+try:
+    conn = psycopg.connect(db_url)
+    conn.close()
+    sys.exit(0)
+except Exception:
+    sys.exit(1)
+END
+}
+
+echo "Waiting for PostgreSQL to be ready..."
+until postgres_ready; do
+  >&2 echo "PostgreSQL is unavailable - sleeping"
+  sleep 1
+done
+
+>&2 echo "PostgreSQL is up and accepting connections!"
+
+exec "$@"

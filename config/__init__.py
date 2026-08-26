@@ -1,0 +1,1 @@
+"""Blue Notes project package."""
