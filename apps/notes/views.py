@@ -1,6 +1,6 @@
 """Views and ViewSets for Notes and Tags."""
 
-from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -92,7 +92,9 @@ from apps.notes.services import (
         request=NoteUpdateSerializer,
         responses={
             status.HTTP_200_OK: NoteDetailSerializer,
-            status.HTTP_409_CONFLICT: "Version conflict: Note was modified by another request.",
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description="Version conflict: Note was modified by another request."
+            ),
         },
     ),
     partial_update=extend_schema(
@@ -105,7 +107,9 @@ from apps.notes.services import (
         request=NoteUpdateSerializer,
         responses={
             status.HTTP_200_OK: NoteDetailSerializer,
-            status.HTTP_409_CONFLICT: "Version conflict",
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description="Version conflict: Note was modified by another request."
+            ),
         },
     ),
     destroy=extend_schema(
@@ -240,6 +244,9 @@ class NoteViewSet(viewsets.GenericViewSet):
         )
 
         return Response(NoteDetailSerializer(updated_note).data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         note = self.get_object()

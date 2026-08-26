@@ -124,15 +124,17 @@ class MeView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-class LogoutView(APIView):
+class LogoutView(generics.GenericAPIView):
     """Invalidate current user auth token."""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.Serializer
 
     @extend_schema(
         tags=["Authentication"],
         summary="Logout / Revoke token",
         description="Deletes the current user's authentication token, ending the active session.",
+        request=None,
         responses={
             status.HTTP_200_OK: inline_serializer(
                 name="LogoutResponse",
