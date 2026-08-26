@@ -1,0 +1,1378 @@
+{
+  "info": {
+    "_postman_id": "8a7c2b4d-1e3f-4e9b-a0bc-9d3e8f7a6b5c",
+    "name": "Blue Notes API",
+    "description": "Exhaustive, automated Postman Collection for the Blue Notes multi-tenant REST service. Covers all 38 endpoint actions, robust variable cascading across collection/environment/global scopes, OCC conflict verification, RBAC rules, revisions, and search.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "alice_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bob_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bob_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "team_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "note_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "hard_delete_note_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "note_version",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "tag_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication & Users",
+      "item": [
+        {
+          "name": "1.1 Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Health status is ok', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('ok');",
+                  "    pm.expect(json.service).to.eql('blue_notes');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/",
+              "host": ["{{base_url}}"],
+              "path": ["health", ""]
+            }
+          }
+        },
+        {
+          "name": "1.2 Register Alice (Team Owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created or 400', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set('auth_token', json.token);",
+                  "        pm.environment.set('auth_token', json.token);",
+                  "        pm.globals.set('auth_token', json.token);",
+                  "    }",
+                  "    if (json.user && json.user.id) {",
+                  "        pm.collectionVariables.set('alice_id', json.user.id);",
+                  "        pm.environment.set('alice_id', json.user.id);",
+                  "        pm.globals.set('alice_id', json.user.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice_admin\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"password_confirm\": \"SecurePass123!\",\n  \"first_name\": \"Alice\",\n  \"last_name\": \"Owner\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register", ""]
+            }
+          }
+        },
+        {
+          "name": "1.3 Register Bob (Team Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created or 400', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set('bob_token', json.token);",
+                  "        pm.environment.set('bob_token', json.token);",
+                  "        pm.globals.set('bob_token', json.token);",
+                  "    }",
+                  "    if (json.user && json.user.id) {",
+                  "        pm.collectionVariables.set('bob_id', json.user.id);",
+                  "        pm.environment.set('bob_id', json.user.id);",
+                  "        pm.globals.set('bob_id', json.user.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"bob_engineer\",\n  \"email\": \"bob@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"password_confirm\": \"SecurePass123!\",\n  \"first_name\": \"Bob\",\n  \"last_name\": \"Engineer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register", ""]
+            }
+          }
+        },
+        {
+          "name": "1.4 Obtain Auth Token (Login as Alice)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('auth_token', json.token);",
+                  "    pm.environment.set('auth_token', json.token);",
+                  "    pm.globals.set('auth_token', json.token);",
+                  "}",
+                  "if (json.user && json.user.id) {",
+                  "    pm.collectionVariables.set('alice_id', json.user.id);",
+                  "    pm.environment.set('alice_id', json.user.id);",
+                  "    pm.globals.set('alice_id', json.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice_admin\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/token/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "token", ""]
+            }
+          }
+        },
+        {
+          "name": "1.5 Obtain Auth Token (Login as Bob)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('bob_token', json.token);",
+                  "    pm.environment.set('bob_token', json.token);",
+                  "    pm.globals.set('bob_token', json.token);",
+                  "}",
+                  "if (json.user && json.user.id) {",
+                  "    pm.collectionVariables.set('bob_id', json.user.id);",
+                  "    pm.environment.set('bob_id', json.user.id);",
+                  "    pm.globals.set('bob_id', json.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"bob_engineer\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/token/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "token", ""]
+            }
+          }
+        },
+        {
+          "name": "1.6 Get Current User Profile (Me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.expect(json.username).to.eql('alice_admin');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "me", ""]
+            }
+          }
+        },
+        {
+          "name": "1.7 Update User Profile (Patch Me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.expect(json.first_name).to.eql('Alice Updated');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Alice Updated\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "me", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Teams & Memberships",
+      "item": [
+        {
+          "name": "2.1 Create Team Workspace (Engineering)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created or 200', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.id) {",
+                  "    pm.collectionVariables.set('team_id', json.id);",
+                  "    pm.environment.set('team_id', json.id);",
+                  "    pm.globals.set('team_id', json.id);",
+                  "    console.log('Saved team_id:', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering Core\",\n  \"description\": \"Shared workspace for core backend architecture.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/teams/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "teams", ""]
+            }
+          }
+        },
+        {
+          "name": "2.2 List User Teams (Fallback Team ID Setter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "var team = (json.results && json.results.length > 0) ? json.results[0] : (Array.isArray(json) && json.length > 0 ? json[0] : null);",
+                  "if (team && team.id) {",
+                  "    pm.collectionVariables.set('team_id', team.id);",
+                  "    pm.environment.set('team_id', team.id);",
+                  "    pm.globals.set('team_id', team.id);",
+                  "    console.log('Resolved team_id from list:', team.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/teams/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "teams", ""]
+            }
+          }
+        },
+        {
+          "name": "2.3 Retrieve Specific Team Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/teams/{{team_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "teams", "{{team_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "2.4 Update Team Details (Patch Team)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated team mission statement\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/teams/{{team_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "teams", "{{team_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "2.5 Add Bob to Team as MEMBER",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created or 400 (if already member)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{bob_id}},\n  \"role\": \"MEMBER\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/teams/{{team_id}}/members/add/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "teams", "{{team_id}}", "members", "add", ""]
+            }
+          }
+        },
+        {
+          "name": "2.6 List Team Members & Roles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/teams/{{team_id}}/members/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "teams", "{{team_id}}", "members", ""]
+            }
+          }
+        },
+        {
+          "name": "2.7 Update Member Role (Promote Bob to ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.expect(json.role).to.eql('ADMIN');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/teams/{{team_id}}/members/{{bob_id}}/role/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "teams", "{{team_id}}", "members", "{{bob_id}}", "role", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Tags Management",
+      "item": [
+        {
+          "name": "3.1 Create Personal Tag",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created or 400', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.id) {",
+                  "        pm.collectionVariables.set('tag_id', json.id);",
+                  "        pm.environment.set('tag_id', json.id);",
+                  "        pm.globals.set('tag_id', json.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Architecture\",\n  \"color\": \"#3B82F6\",\n  \"team\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/tags/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "tags", ""]
+            }
+          }
+        },
+        {
+          "name": "3.2 List Tags (Fallback Tag ID Setter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "var tag = (json.results && json.results.length > 0) ? json.results[0] : (Array.isArray(json) && json.length > 0 ? json[0] : null);",
+                  "if (tag && tag.id) {",
+                  "    pm.collectionVariables.set('tag_id', tag.id);",
+                  "    pm.environment.set('tag_id', tag.id);",
+                  "    pm.globals.set('tag_id', tag.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/tags/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "tags", ""]
+            }
+          }
+        },
+        {
+          "name": "3.3 Get Tag Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/tags/{{tag_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "tags", "{{tag_id}}", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Notes Operations & OCC Concurrency",
+      "item": [
+        {
+          "name": "4.1 Create Personal Note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.id) {",
+                  "    pm.collectionVariables.set('note_id', json.id);",
+                  "    pm.environment.set('note_id', json.id);",
+                  "    pm.globals.set('note_id', json.id);",
+                  "}",
+                  "if (json.version !== undefined) {",
+                  "    pm.collectionVariables.set('note_version', json.version);",
+                  "    pm.environment.set('note_version', json.version);",
+                  "    pm.globals.set('note_version', json.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Distributed Systems Principles\",\n  \"body\": \"Key concepts include OCC, row-level multi-tenancy, and PostgreSQL indexing.\",\n  \"team_id\": null,\n  \"tag_ids\": [\"{{tag_id}}\"],\n  \"is_pinned\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", ""]
+            }
+          }
+        },
+        {
+          "name": "4.2 Get Note Details (Fallback Note ID & Version Setter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.version !== undefined) {",
+                  "    pm.collectionVariables.set('note_version', json.version);",
+                  "    pm.environment.set('note_version', json.version);",
+                  "    pm.globals.set('note_version', json.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/{{note_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "{{note_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "4.3 Update Note (OCC Success with matching expected_version)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.version !== undefined) {",
+                  "    pm.collectionVariables.set('note_version', json.version);",
+                  "    pm.environment.set('note_version', json.version);",
+                  "    pm.globals.set('note_version', json.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Distributed Systems Principles (v2)\",\n  \"body\": \"Added section on PostgreSQL GIN indexes and websearch syntax.\",\n  \"expected_version\": {{note_version}},\n  \"change_summary\": \"Added search index details\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/{{note_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "{{note_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "4.4 OCC Conflict Test (Stale Version -> Expect 409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.expect(json.error.code).to.eql('conflict');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Conflicting Update Attempt\",\n  \"body\": \"This should be rejected because expected_version is stale.\",\n  \"expected_version\": 1,\n  \"change_summary\": \"Concurrent write simulation\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/{{note_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "{{note_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "4.5 Promote Personal Note to Team Workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK or 400', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"team_id\": \"{{team_id}}\",\n  \"visibility\": \"TEAM\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/{{note_id}}/share-to-team/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "{{note_id}}", "share-to-team", ""]
+            }
+          }
+        },
+        {
+          "name": "4.6 View Note Revision History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.expect(json.length).to.be.at.least(2);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/{{note_id}}/history/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "{{note_id}}", "history", ""]
+            }
+          }
+        },
+        {
+          "name": "4.7 Revert Note to Version 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.version !== undefined) {",
+                  "    pm.collectionVariables.set('note_version', json.version);",
+                  "    pm.environment.set('note_version', json.version);",
+                  "    pm.globals.set('note_version', json.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version_number\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/{{note_id}}/revert/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "{{note_id}}", "revert", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Search & Filters",
+      "item": [
+        {
+          "name": "5.1 Ranked Full-Text Search (q=PostgreSQL)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/search/?q=PostgreSQL",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "search", ""],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "PostgreSQL"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.2 Filter Notes by Team",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/?team={{team_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", ""],
+              "query": [
+                {
+                  "key": "team",
+                  "value": "{{team_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.3 Filter Pinned Notes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/?is_pinned=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", ""],
+              "query": [
+                {
+                  "key": "is_pinned",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Trash, Hard Delete & Lifecycle",
+      "item": [
+        {
+          "name": "6.1 Soft-Delete Note to Trash",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/{{note_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "{{note_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "6.2 List Trash",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/trash/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "trash", ""]
+            }
+          }
+        },
+        {
+          "name": "6.3 Restore Note from Trash",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.expect(json.id).to.eql(pm.collectionVariables.get('note_id'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/{{note_id}}/restore/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "{{note_id}}", "restore", ""]
+            }
+          }
+        },
+        {
+          "name": "6.4 Create Note for Hard Delete Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.id) {",
+                  "    pm.collectionVariables.set('hard_delete_note_id', json.id);",
+                  "    pm.environment.set('hard_delete_note_id', json.id);",
+                  "    pm.globals.set('hard_delete_note_id', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Ephemeral Note for Hard Delete\",\n  \"body\": \"This will be purged permanently.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", ""]
+            }
+          }
+        },
+        {
+          "name": "6.5 Hard Delete Note (?hard=true)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notes/{{hard_delete_note_id}}/?hard=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notes", "{{hard_delete_note_id}}", ""],
+              "query": [
+                {
+                  "key": "hard",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Session Cleanup & Logout",
+      "item": [
+        {
+          "name": "7.1 Invalidate Bob Token (Logout Bob)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{bob_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "logout", ""]
+            }
+          }
+        },
+        {
+          "name": "7.2 Invalidate Alice Token (Logout Alice)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "logout", ""]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

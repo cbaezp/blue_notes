@@ -174,3 +174,126 @@ The test suite is modularized directly inside each domain application, separatin
 * **`test_api.py`**: Integration tests for personal vs. team notes, 409 Conflict handling, soft-delete and restore lifecycle, revision history endpoints, and personal-to-team note promotion.
 * **`test_permissions.py`**: Exhaustive permission matrix for personal notes privacy, shared team notes, private team notes, and moderation delete rules.
 * **`test_edge_cases.py`**: Pagination structure, pinned note filtering, missing `expected_version` validation, hard delete permanent purging, invalid reversion versions, and custom error JSON envelope structure.
+
+---
+
+## Step-by-Step API Workflow Guide
+
+Follow this sequence to test all core features from terminal or API clients:
+
+### 1. Register User Accounts
+```bash
+# Register Alice (Team Owner)
+curl -X POST http://localhost:8000/api/v1/auth/register/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "alice", "email": "alice@example.com", "password": "Password123!", "password_confirm": "Password123!", "first_name": "Alice", "last_name": "Smith"}'
+
+# Register Bob (Team Member)
+curl -X POST http://localhost:8000/api/v1/auth/register/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "bob", "email": "bob@example.com", "password": "Password123!", "password_confirm": "Password123!", "first_name": "Bob", "last_name": "Jones"}'
+```
+
+### 2. Obtain Auth Token (Login)
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "alice", "password": "Password123!"}'
+# Response returns: {"token": "<ALICE_TOKEN>", "user": {...}}
+```
+
+### 3. Create a Team Workspace and Add Members
+```bash
+# Create Team Workspace (Alice becomes OWNER)
+curl -X POST http://localhost:8000/api/v1/teams/ \
+  -H "Authorization: Token <ALICE_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Engineering Core", "description": "Backend architecture team"}'
+# Response returns: {"id": "<TEAM_ID>", "name": "Engineering Core", ...}
+
+# Add Bob as a MEMBER (using Bob's user ID)
+curl -X POST http://localhost:8000/api/v1/teams/<TEAM_ID>/members/add/ \
+  -H "Authorization: Token <ALICE_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 2, "role": "MEMBER"}'
+```
+
+### 4. Create and Update a Personal Note (with OCC)
+```bash
+# Create a private personal note
+curl -X POST http://localhost:8000/api/v1/notes/ \
+  -H "Authorization: Token <ALICE_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Database Architecture", "body": "PostgreSQL full-text search and indexing strategies.", "team_id": null, "is_pinned": true}'
+# Response returns: {"id": "<NOTE_ID>", "version": 1, ...}
+
+# Update note successfully with matching expected_version (OCC)
+curl -X PUT http://localhost:8000/api/v1/notes/<NOTE_ID>/ \
+  -H "Authorization: Token <ALICE_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Database Architecture (v2)", "body": "Added GIN index benchmarks.", "expected_version": 1, "change_summary": "Added index benchmarks"}'
+# Response returns: {"id": "<NOTE_ID>", "version": 2, ...}
+
+# Attempting an update with a stale expected_version returns 409 Conflict
+curl -X PUT http://localhost:8000/api/v1/notes/<NOTE_ID>/ \
+  -H "Authorization: Token <ALICE_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Stale Edit", "expected_version": 1}'
+# Response returns: HTTP 409 Conflict {"error": {"code": "conflict", "message": "Note was modified by another request..."}}
+```
+
+### 5. Promote Personal Note into Team Workspace
+```bash
+curl -X POST http://localhost:8000/api/v1/notes/<NOTE_ID>/share-to-team/ \
+  -H "Authorization: Token <ALICE_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"team_id": "<TEAM_ID>", "visibility": "TEAM"}'
+```
+
+### 6. Search Notes using Full-Text Search
+```bash
+# Ranked full-text search matching 'PostgreSQL' across accessible notes
+curl -X GET "http://localhost:8000/api/v1/notes/search/?q=PostgreSQL" \
+  -H "Authorization: Token <ALICE_TOKEN>"
+```
+
+### 7. View Revision History and Revert to Prior Version
+```bash
+# View all audit snapshots
+curl -X GET http://localhost:8000/api/v1/notes/<NOTE_ID>/history/ \
+  -H "Authorization: Token <ALICE_TOKEN>"
+
+# Revert content back to version 1
+curl -X POST http://localhost:8000/api/v1/notes/<NOTE_ID>/revert/ \
+  -H "Authorization: Token <ALICE_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"version_number": 1}'
+```
+
+### 8. Soft-Delete (Trash) and Restore
+```bash
+# Move note to trash
+curl -X DELETE http://localhost:8000/api/v1/notes/<NOTE_ID>/ \
+  -H "Authorization: Token <ALICE_TOKEN>"
+
+# List notes in trash
+curl -X GET http://localhost:8000/api/v1/notes/trash/ \
+  -H "Authorization: Token <ALICE_TOKEN>"
+
+# Restore note from trash
+curl -X POST http://localhost:8000/api/v1/notes/<NOTE_ID>/restore/ \
+  -H "Authorization: Token <ALICE_TOKEN>"
+```
+
+---
+
+## Postman Collection
+
+A pre-configured Postman collection is included at [`postman_collection.json`](file:///Users/cbz/Desktop/blue_notes/postman_collection.json).
+
+### How to Use:
+1. Open Postman and click **Import**.
+2. Select the `postman_collection.json` file from this repository.
+3. The collection is pre-configured with dynamic variables (`{{base_url}}`, `{{auth_token}}`, `{{team_id}}`, `{{note_id}}`, `{{note_version}}`).
+4. Automated test scripts extract tokens and resource IDs sequentially from responses and propagate them automatically across subsequent requests.
+5. Run the requests in folder order (`1. Authentication` -> `2. Teams` -> `3. Tags` -> `4. Notes` -> `5. Search` -> `6. Trash`).
