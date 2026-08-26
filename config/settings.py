@@ -27,8 +27,7 @@ else:
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-default-change-me-in-production")
 
 DEBUG = env("DEBUG")
-
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 # Application definition
 INSTALLED_APPS = [

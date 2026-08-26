@@ -70,15 +70,28 @@ The database will initialize, migrations will apply automatically on startup, an
 * **Interactive Swagger UI:** `http://localhost:8000/api/docs/`
 * **ReDoc Documentation:** `http://localhost:8000/api/redoc/`
 * **OpenAPI 3.0 Schema:** `http://localhost:8000/api/schema/`
+* **Django Admin:** `http://localhost:8000/admin/`
 * **Health Check:** `http://localhost:8000/health/`
 
-### 2. Run the Test Suite
+### 2. Create a Superuser (For Django Admin Access)
+
+To inspect, moderate, or manage data in the Django Admin interface (`http://localhost:8000/admin/`):
+
+```bash
+# Interactive prompt:
+docker compose -f local.yml exec django python manage.py createsuperuser
+
+# Or non-interactive one-liner (Username: admin, Password: adminpassword123):
+docker compose -f local.yml exec -e DJANGO_SUPERUSER_PASSWORD=adminpassword123 django python manage.py createsuperuser --noinput --username admin --email admin@example.com
+```
+
+### 3. Run the Test Suite
 
 ```bash
 docker compose -f local.yml exec django pytest
 ```
 
-### 3. Run Linter and Formatter (Ruff)
+### 4. Run Linter and Formatter (Ruff)
 
 ```bash
 docker compose -f local.yml exec django ruff check .
